@@ -48,7 +48,7 @@ jobs:
      - name: Get tag from Ballerina.toml and create tag name
        working-directory: ./transformation/v2-to-fhirr4-service
        run: |
-          VERSION_NO=$(grep -oP '(?<=version = \")[^\"]*' Ballerina.toml)
+          VERSION_NO=$(grep -m 1 'version =' Ballerina.toml | cut -d '=' -f2 | sed 's/\"//g')
           echo "VERSION_NO='$VERSION_NO'" >> $GITHUB_ENV
 
           prefix=$(echo ${{ inputs.service-name }} | cut -d '-' -f 1-2)
