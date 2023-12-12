@@ -26,16 +26,16 @@ jobs:
           WORKING_DIR: ${{ github.workspace }}
           JAVA_HOME: /usr/lib/jvm/default-jvm   
 
-     - name: Find JAR file
-       id: find-jars
-       run: |
-          jar_files=$(find "${{ github.workspace }}" -name "*.jar" -path "*/target/bin/*")
-          echo "JAR_FILES=$jar_files" >> $GITHUB_ENV
+    #  - name: Find JAR file
+    #    id: find-jars
+    #    run: |
+    #       jar_files=$(find "${{ github.workspace }}" -name "*.jar" -path "*/target/bin/*")
+    #       echo "JAR_FILES=$jar_files" >> $GITHUB_ENV
 
-     - name: JAR file Info
-       run: |
-          echo "Jar path: $JAR_FILES"
-          jar tf $JAR_FILES
+    #  - name: JAR file Info
+    #    run: |
+    #       echo "Jar path: $JAR_FILES"
+    #       jar tf $JAR_FILES
 
      - name: Get tag from Ballerina.toml and create tag name
        run: |
@@ -64,18 +64,18 @@ jobs:
               "generate_release_notes": false
             }'
 
-     - name: Extract release ID
-       run: |
-          response=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION)
-          echo "$response"
-          release_id=$(echo "$response" | jq -r '.id')
-          echo "RELEASE_ID=$release_id" >> $GITHUB_ENV
+    #  - name: Extract release ID
+    #    run: |
+    #       response=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION)
+    #       echo "$response"
+    #       release_id=$(echo "$response" | jq -r '.id')
+    #       echo "RELEASE_ID=$release_id" >> $GITHUB_ENV
 
-     - name: Upload JAR to GitHub Release
-       run: | 
-          echo "Release id: $RELEASE_ID"             
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-            -H "Content-Type: application/java-archive" \
-            --data-binary @"$JAR_FILES" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILES)"
+    #  - name: Upload JAR to GitHub Release
+    #    run: | 
+    #       echo "Release id: $RELEASE_ID"             
+    #       curl -X POST \
+    #         -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+    #         -H "Content-Type: application/java-archive" \
+    #         --data-binary @"$JAR_FILES" \
+    #         "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILES)"
