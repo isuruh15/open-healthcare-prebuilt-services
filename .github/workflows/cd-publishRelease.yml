@@ -22,7 +22,7 @@ jobs:
         ref: ${{ github.event.inputs.target-branch }}
 
      - name: Run ballerina build
-       uses: ballerina-platform/ballerina-action@2201.7.0
+       uses: ballerina-platform/ballerina-action@2201.8.4
        with:
         args:
           build
