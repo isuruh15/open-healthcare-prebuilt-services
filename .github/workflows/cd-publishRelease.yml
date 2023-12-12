@@ -10,6 +10,9 @@ on:
         target-branch:
           description: 'Branch to target'
           required: true
+        service-name:
+          description: 'Service name'
+          required: true
 
 jobs:
   release:
@@ -47,7 +50,7 @@ jobs:
           VERSION_NO=$(grep -oP '(?<=version = \")[^\"]*' Ballerina.toml)
           echo "VERSION_NO='$VERSION_NO'" >> $GITHUB_ENV
 
-          prefix=$(echo ${{ github.event.inputs.target-branch }} | cut -d '-' -f 1-2)
+          prefix=$(echo ${{ inputs.service-name }} | cut -d '-' -f 1-2)
           echo VERSION="${prefix}-v$(echo $VERSION_NO)" >> $GITHUB_ENV 
 
      - name: Create Release
