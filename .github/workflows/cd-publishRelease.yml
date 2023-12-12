@@ -3,7 +3,7 @@ name: Publish Release
 on:
   pull_request:
     types:
-      - opened
+      - converted_to_draft
       - synchronize
     # workflow_dispatch:
     #   inputs:
