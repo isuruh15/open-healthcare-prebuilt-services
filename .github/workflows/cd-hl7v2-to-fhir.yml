@@ -1,0 +1,13 @@
+name: CD - HL7 V2 to FHIR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+     uses: ./.github/workflows/cd-executor.yml
+     secrets: inherit
+     with:
+      working_dir: ./transformations/v2-to-fhirr4-service
+      target-branch: main
+      service-name: hl7v2-to-fhir-transformation
