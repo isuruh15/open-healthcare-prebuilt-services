@@ -46,6 +46,7 @@ jobs:
     #       jar tf $JAR_FILES
 
      - name: Get tag from Ballerina.toml and create tag name
+       working-directory: ./transformation/v2-to-fhirr4-service
        run: |
           VERSION_NO=$(grep -oP '(?<=version = \")[^\"]*' Ballerina.toml)
           echo "VERSION_NO='$VERSION_NO'" >> $GITHUB_ENV
