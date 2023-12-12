@@ -27,7 +27,8 @@ jobs:
         args:
           build
        env:
-          WORKING_DIR: ${{ github.workspace }}
+          # WORKING_DIR: ${{ github.workspace }}
+          WORKING_DIR:  ./transformation/v2-to-fhirr4-service
           JAVA_HOME: /usr/lib/jvm/default-jvm   
 
     #  - name: Find JAR file
