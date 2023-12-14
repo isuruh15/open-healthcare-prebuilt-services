@@ -61,6 +61,7 @@ jobs:
               EXTRACTED_PATH2=$(echo "$file" | cut -d '/' -f 1-2)
               echo "${EXTRACTED_PATH}"
               echo "${EXTRACTED_PATH2}"
+              echo "${EXTRACTED_PATH2}"
             fi
 
             if [[ $EXTRACTED_PATH ]]; then
