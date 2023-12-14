@@ -57,6 +57,7 @@ jobs:
             elif [[ $file == $R4_PATTERN ]]; then
               EXTRACTED_PATH=$(echo "$file" | cut -d '/' -f 1-2)
             elif [[ $file == $R5_PATTERN ]]; then
+              echo "block R5"
               # EXTRACTED_PATH=$(echo "$file" | cut -d '/' -f 1-3)
               EXTRACTED_PATH2=$(echo "$file" | cut -d '/' -f 1-2)
               # echo "${EXTRACTED_PATH}"
