@@ -1,10 +1,17 @@
 name: Publish Release
 
 on:
+#   pull_request:
+#     types:
+#       - converted_to_draft
+      # - synchronize
     workflow_dispatch:
       inputs:
         target-branch:
           description: 'Branch to target'
+          required: true
+        service-name:
+          description: 'Service name'
           required: true
 
 jobs:
@@ -18,31 +25,33 @@ jobs:
         ref: ${{ github.event.inputs.target-branch }}
 
      - name: Run ballerina build
-       uses: ballerina-platform/ballerina-action@2201.7.0
+       uses: ballerina-platform/ballerina-action@2201.8.4
        with:
         args:
-          build
+          pack
        env:
-          WORKING_DIR: ${{ github.workspace }}
+          # WORKING_DIR: ${{ github.workspace }}
+          WORKING_DIR:  ./transformation/v2-to-fhirr4-service
           JAVA_HOME: /usr/lib/jvm/default-jvm   
 
-     - name: Find JAR file
-       id: find-jars
-       run: |
-          jar_files=$(find "${{ github.workspace }}" -name "*.jar" -path "*/target/bin/*")
-          echo "JAR_FILES=$jar_files" >> $GITHUB_ENV
+    #  - name: Find JAR file
+    #    id: find-jars
+    #    run: |
+    #       jar_files=$(find "${{ github.workspace }}" -name "*.jar" -path "*/target/bin/*")
+    #       echo "JAR_FILES=$jar_files" >> $GITHUB_ENV
 
-     - name: JAR file Info
-       run: |
-          echo "Jar path: $JAR_FILES"
-          jar tf $JAR_FILES
+    #  - name: JAR file Info
+    #    run: |
+    #       echo "Jar path: $JAR_FILES"
+    #       jar tf $JAR_FILES
 
      - name: Get tag from Ballerina.toml and create tag name
+       working-directory: ./transformation/v2-to-fhirr4-service
        run: |
-          VERSION_NO=$(grep -oP '(?<=version = \")[^\"]*' Ballerina.toml)
+          VERSION_NO=$(grep -m 1 'version =' Ballerina.toml | cut -d '=' -f2 | sed 's/\"//g')
           echo "VERSION_NO='$VERSION_NO'" >> $GITHUB_ENV
 
-          prefix=$(echo ${{ github.event.inputs.target-branch }} | cut -d '-' -f 1-2)
+          prefix=$(echo ${{ inputs.service-name }} | cut -d '-' -f 1-2)
           echo VERSION="${prefix}-v$(echo $VERSION_NO)" >> $GITHUB_ENV 
 
      - name: Create Release
@@ -51,7 +60,7 @@ jobs:
           curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/releases \
             -d '{
@@ -64,18 +73,18 @@ jobs:
               "generate_release_notes": false
             }'
 
-     - name: Extract release ID
-       run: |
-          response=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION)
-          echo "$response"
-          release_id=$(echo "$response" | jq -r '.id')
-          echo "RELEASE_ID=$release_id" >> $GITHUB_ENV
+    #  - name: Extract release ID
+    #    run: |
+    #       response=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION)
+    #       echo "$response"
+    #       release_id=$(echo "$response" | jq -r '.id')
+    #       echo "RELEASE_ID=$release_id" >> $GITHUB_ENV
 
-     - name: Upload JAR to GitHub Release
-       run: | 
-          echo "Release id: $RELEASE_ID"             
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
-            -H "Content-Type: application/java-archive" \
-            --data-binary @"$JAR_FILES" \
-            "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILES)"
+    #  - name: Upload JAR to GitHub Release
+    #    run: | 
+    #       echo "Release id: $RELEASE_ID"             
+    #       curl -X POST \
+    #         -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+    #         -H "Content-Type: application/java-archive" \
+    #         --data-binary @"$JAR_FILES" \
+    #         "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$(basename $JAR_FILES)"
