@@ -65,7 +65,7 @@ jobs:
             fi
 
             if [[ $EXTRACTED_PATH ]]; then
-              UNIQUE_PATHS_MAP[$EXTRACTED_PATH]=1
+              UNIQUE_PATHS_MAP[$EXTRACTED_PATH2]=1
             fi
           done
           
