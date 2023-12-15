@@ -34,7 +34,7 @@ type V2ToFhirInternalServerError record {|
     string body;
 |};
 
-// todo: remove this comment
+// todo: remove this comment entirely
 service / on new http:Listener(9090) {
 
     resource function post transform(@http:Payload string hl7Message) returns V2ToFhirResponse|V2ToFhirBadRequest|V2ToFhirInternalServerError {
