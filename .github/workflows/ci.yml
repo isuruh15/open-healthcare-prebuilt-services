@@ -7,9 +7,10 @@ on:
       - synchronize
 
 env:
-  R4_RESOURCE_APIS_PATTERN: r4/resource-apis/*/*
-  R4_PATTERN: r4/*/*
-  R5_PATTERN: transformation/v2-to-fhirr4-service/*
+  CONFORMANCE_PATTERN: conformance/*/*
+  EHR_PATTERN: ehr-connectivity/*/*
+  MISC_PATTERN: miscellaneous/*/*
+  TRANSFORMATION_PATTERN: transformation/*/*
 
 jobs:
   setup:
@@ -51,21 +52,14 @@ jobs:
           # Remove duplicates from the CHANGED_FILES_ARRAY
           declare -A UNIQUE_PATHS_MAP
           for file in "${CHANGED_FILES_ARRAY[@]}"; do
-            if [[ $file == $R4_RESOURCE_APIS_PATTERN ]]; then
-              EXTRACTED_PATH=$(echo "$file" | cut -d '/' -f 1-3)
-              echo "${EXTRACTED_PATH}"
-            elif [[ $file == $R4_PATTERN ]]; then
+            if [[ $file == $CONFORMANCE_PATTERN ]] || [[ $file == $EHR_PATTERN ]] || [[ $file == $MISC_PATTERN ]] || [[ $file == $TRANSFORMATION_PATTERN ]]; then
+              # Condition for 2 level projects
               EXTRACTED_PATH=$(echo "$file" | cut -d '/' -f 1-2)
-            elif [[ $file == $R5_PATTERN ]]; then
-              echo "block R5"
-              # EXTRACTED_PATH=$(echo "$file" | cut -d '/' -f 1-3)
-              EXTRACTED_PATH2=$(echo "$file" | cut -d '/' -f 1-2)
-              # echo "${EXTRACTED_PATH}"
-              echo "${EXTRACTED_PATH2}"
+              echo "${EXTRACTED_PATH}"
             fi
 
-            if [[ $EXTRACTED_PATH2 ]]; then
-              UNIQUE_PATHS_MAP[$EXTRACTED_PATH2]=1
+            if [[ $EXTRACTED_PATH ]]; then
+              UNIQUE_PATHS_MAP[$EXTRACTED_PATH]=1
             fi
           done
           
