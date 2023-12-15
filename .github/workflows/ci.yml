@@ -64,7 +64,7 @@ jobs:
               echo "${EXTRACTED_PATH2}"
             fi
 
-            if [[ $EXTRACTED_PATH ]]; then
+            if [[ $EXTRACTED_PATH2 ]]; then
               UNIQUE_PATHS_MAP[$EXTRACTED_PATH2]=1
             fi
           done
