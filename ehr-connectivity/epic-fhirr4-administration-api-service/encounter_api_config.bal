@@ -17,6 +17,7 @@
 
 import ballerinax/health.fhir.r4;
 
+#todo: remove this line
 final r4:ResourceAPIConfig encounterApiConfig = {
     resourceType: "Encounter",
     profiles: [
