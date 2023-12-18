@@ -9,4 +9,3 @@ jobs:
      secrets: inherit
      with:
       working_dir: ./transformations/v2-to-fhirr4-service
-      service-name: hl7v2-to-fhir-transformation
