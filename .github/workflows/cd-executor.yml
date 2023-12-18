@@ -3,10 +3,6 @@ name: Publish Release
 on:
     workflow_call:
       inputs:
-        target-branch:
-          description: 'Branch to target'
-          type: string
-          required: true
         service-name:
           description: 'Service name'
           type: string
