@@ -17,7 +17,7 @@ http:OAuth2ClientCredentialsGrantConfig config = {
 
 isolated http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-service /trigger on new http:Listener(9099) {
+service / on new http:Listener(9099) {
 
     function init() returns error? {
 
