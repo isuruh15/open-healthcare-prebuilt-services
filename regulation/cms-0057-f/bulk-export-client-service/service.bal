@@ -3,6 +3,8 @@ import ballerina/log;
 import ballerina/task;
 import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
+import ballerina/file;
+import ballerina/mime;
 
 configurable BulkExportServerConfig sourceServerConfig = ?;
 configurable BulkExportClientConfig clientServiceConfig = ?;
@@ -188,6 +190,26 @@ service / on new http:Listener(9099) {
         }
 
         return http:STATUS_ACCEPTED;
+
+    }
+
+    isolated resource function get file/download(http:Request req, string exportId, string resourceType) returns http:Response|error? {
+
+        log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
+        // Implementation
+        string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
+
+        mime:Entity entity = new;
+        entity.setFileAsEntityBody(filePath);
+
+        http:Response response = new;
+        response.setEntity(entity);
+        error? contentType = response.setContentType("gzip");
+        if contentType is error {
+            log:printError("Error occurred while setting the content type: ");
+        }
+        
+        return response;
 
     }
 }
