@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: /
+  title: Service Openapi Yaml
   version: 0.1.0
 servers:
 - url: "{server}:{port}/"
@@ -155,6 +155,37 @@ paths:
         schema:
           type: string
       responses: {}
+  /file/download:
+    get:
+      operationId: getFileDownload
+      parameters:
+      - name: exportId
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: resourceType
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          description: Any Response
+          content:
+            '*/*':
+              schema:
+                description: Any type of entity body
+        "202":
+          description: Accepted
+        "400":
+          description: BadRequest
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorPayload'
 components:
   schemas:
     ErrorPayload:
