@@ -228,6 +228,6 @@ isolated function submitBackgroundJob(string taskId, http:Response|http:ClientEr
             // if location is available, can retry the task
         }
     }else {
-        log:printError("Error occurred while sending the kick-off request to the bulk export server.");
+        log:printError("Error occurred while sending the kick-off request to the bulk export server.", status);
     }
 }
