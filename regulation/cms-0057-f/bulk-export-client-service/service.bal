@@ -227,5 +227,7 @@ isolated function submitBackgroundJob(string taskId, http:Response|http:ClientEr
             log:printError("Error occurred while getting the location or scheduling the Job", e);
             // if location is available, can retry the task
         }
+    }else {
+        log:printError("Error occurred while sending the kick-off request to the bulk export server.");
     }
 }
