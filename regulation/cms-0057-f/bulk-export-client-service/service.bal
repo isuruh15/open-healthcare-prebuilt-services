@@ -106,6 +106,8 @@ service / on new http:Listener(9099) {
             }
             international401:Parameters parametersResource = populateParamsResource(matchedPatients, _outputFormat, _since, _type);
             // kick-off request to the bulk export server
+            log:printInfo(string `URL: ${sourceServerConfig.contextPath}/Patient/$export`);
+            log:printInfo(parametersResource.clone().toBalString());
 
             lock {
                 status = statusClient->post(string `${sourceServerConfig.contextPath}/Patient/$export`, parametersResource.clone().toJson(),
