@@ -23,15 +23,15 @@ isolated service / on new http:Listener(9099) {
 
     function init() returns error? {
 
-        if clientServiceConfig.authEnabled {
-            lock {
-                statusClient = check new (sourceServerConfig.baseUrl, auth = config.clone());
-            }
-        } else {
-            lock {
-                statusClient = check new (sourceServerConfig.baseUrl);
-            }
-        }
+        // if clientServiceConfig.authEnabled {
+        //     lock {
+        //         statusClient = check new (sourceServerConfig.baseUrl, auth = config.clone());
+        //     }
+        // } else {
+        //     lock {
+        //         statusClient = check new (sourceServerConfig.baseUrl);
+        //     }
+        // }
 
         log:printInfo("Bulk export client Service is started...", port = clientServiceConfig.port);
     }
@@ -108,15 +108,16 @@ isolated service / on new http:Listener(9099) {
             // kick-off request to the bulk export server
             log:printInfo(string `URL: ${sourceServerConfig.contextPath}/Patient/$export`);
             log:printInfo(parametersResource.clone().toBalString());
+            http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-            lock {
+            // lock {
                 status = statusClient->post(string `${sourceServerConfig.contextPath}/Patient/$export`, parametersResource.clone().toJson(),
                 {
                     Accept: "application/fhir+json",
                     Prefer: "respond-async",
                     ContentType: "application/json"
                 });
-            }
+            // }
             submitBackgroundJob(taskId, status);
 
             if isSuccess {
