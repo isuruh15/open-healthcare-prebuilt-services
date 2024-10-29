@@ -23,15 +23,15 @@ isolated service / on new http:Listener(9099) {
 
     function init() returns error? {
 
-        // if clientServiceConfig.authEnabled {
-        //     lock {
-        //         statusClient = check new (sourceServerConfig.baseUrl, auth = config.clone());
-        //     }
-        // } else {
-        //     lock {
-        //         statusClient = check new (sourceServerConfig.baseUrl);
-        //     }
-        // }
+        if clientServiceConfig.authEnabled {
+            lock {
+                statusClient = check new (sourceServerConfig.baseUrl, auth = config.clone());
+            }
+        } else {
+            lock {
+                statusClient = check new (sourceServerConfig.baseUrl);
+            }
+        }
 
         log:printInfo("Bulk export client Service is started...", port = clientServiceConfig.port);
     }
@@ -106,18 +106,15 @@ isolated service / on new http:Listener(9099) {
             }
             international401:Parameters parametersResource = populateParamsResource(matchedPatients, _outputFormat, _since, _type);
             // kick-off request to the bulk export server
-            log:printInfo(string `URL: ${sourceServerConfig.contextPath}/Patient/$export`);
-            log:printInfo(parametersResource.clone().toBalString());
-            http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-            // lock {
+            lock {
                 status = statusClient->post(string `${sourceServerConfig.contextPath}/Patient/$export`, parametersResource.clone().toJson(),
                 {
                     Accept: "application/fhir+json",
                     Prefer: "respond-async",
                     ContentType: "application/json"
                 });
-            // }
+            }
             submitBackgroundJob(taskId, status);
 
             if isSuccess {
@@ -199,7 +196,6 @@ isolated service / on new http:Listener(9099) {
     isolated resource function get file/download(http:Request req, string exportId, string resourceType) returns http:Response|error? {
 
         log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
-        // Implementation
         string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
 
         mime:Entity entity = new;
@@ -211,7 +207,6 @@ isolated service / on new http:Listener(9099) {
         if contentType is error {
             log:printError("Error occurred while setting the content type: ");
         }
-        
         return response;
 
     }
