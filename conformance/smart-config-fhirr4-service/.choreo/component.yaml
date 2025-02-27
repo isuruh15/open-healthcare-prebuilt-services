@@ -3,7 +3,7 @@ endpoints:
     - name: smart-configuration-api
       displayName: SMART CONFIGURATION API
       service:
-        basePath: /fhir/r4/.well-known/smart-configuration
+        basePath: /fhir/r4/\.well-known/smart-configuration
         port: 9090
       type: REST
       networkVisibilities:
