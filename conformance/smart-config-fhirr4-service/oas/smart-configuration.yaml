@@ -11,7 +11,7 @@ tags:
 - name: SmartConfiguration
 - name: 4.0.1
 paths:
-  /:
+  /\.well-known/smart-configuration:
     get:
       tags:
       - GET
