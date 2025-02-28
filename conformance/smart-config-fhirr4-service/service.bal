@@ -35,12 +35,12 @@ final readonly & SmartConfiguration smartConfiguration = check generateSmartConf
 
 # The service representing well known API
 # Bound to port defined by configs
-service / on new http:Listener(9090) {
+service /fhir/r4/\.well\-known on new http:Listener(9090) {
     
     # The authorization endpoints accepted by a FHIR resource server are exposed as a Well-Known Uniform Resource Identifiers (URIs) (RFC5785) JSON document.
     # Reference: https://build.fhir.org/ig/HL7/smart-app-launch/conformance.html#using-well-known
     # + return - Smart configuration
-    resource isolated function get fhir/r4/\.well\-known/smart\-configuration() returns SmartConfigResponse|SmartConfigInternalServerError {
+    resource isolated function get smart\-configuration() returns SmartConfigResponse|SmartConfigInternalServerError {
         json|error response = smartConfiguration.toJson();
         if response is json {
             log:printDebug("Smart configuration served successfully.");
