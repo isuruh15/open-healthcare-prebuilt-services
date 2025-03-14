@@ -262,6 +262,21 @@ isolated function populateCapabilityStatementRestResources(string? resourceFileP
                 log:printDebug(string `${VALUE_NOT_FOUND}: resourceInteraction`);
             }
 
+            international401:CapabilityStatementRestResourceOperation[] resourceOperation = [];
+            string[]? operationDefinitions = configResource.operations;
+            if operationDefinitions is string[] {
+                foreach string operationdefinition in operationDefinitions {
+                    international401:CapabilityStatementRestResourceOperation operation = {
+                        name: "export",
+                        definition: operationdefinition
+                    };
+                    resourceOperation.push(operation);
+                }
+                'resource.operation = resourceOperation;
+            } else {
+                log:printDebug(string `${VALUE_NOT_FOUND}: resourceOperation`);
+            }
+
             string? configVersioning = configResource.versioning;
             if configVersioning is string {
                 international401:CapabilityStatementRestResourceVersioning versioning = check configVersioning.ensureType(international401:CapabilityStatementRestResourceVersioning);

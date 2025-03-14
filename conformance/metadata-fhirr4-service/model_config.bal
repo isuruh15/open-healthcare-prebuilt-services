@@ -129,4 +129,5 @@ public type ConfigResource record {
     string[] quantitySearchParams?;
     string[] uriSearchParams?;
     string[] specialSearchParams?;
+    string[] operations?;
 };
