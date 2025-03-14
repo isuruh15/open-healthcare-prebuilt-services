@@ -45,6 +45,7 @@ public type ConfigFHIRServer record {|
     string fhirVersion;
     string[] format;
     string[] patchFormat?;
+    string[] instantiates?;
 |};
 
 # If the endpoint is a RESTful one

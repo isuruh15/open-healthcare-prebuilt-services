@@ -65,6 +65,7 @@ isolated function generateCapabilityStatement() returns international401:Capabil
         url: configFHIRServer.implementationUrl
     };
     capabilityStatement.implementation = capabilityStatementImplementation;
+    capabilityStatement.instantiates = configFHIRServer.instantiates;
 
     string[]? configPatchFormat = configFHIRServer.patchFormat;
     if configPatchFormat is string[] {
