@@ -1,4 +1,4 @@
-// import ballerina/file;
+import ballerina/file;
 // Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -13,7 +13,7 @@
 // under the License.
 import ballerina/http;
 import ballerina/log;
-// import ballerina/mime;
+import ballerina/mime;
 import ballerina/task;
 import ballerina/uuid;
 import ballerinax/health.fhir.r4.international401;
@@ -21,7 +21,6 @@ import ballerinax/health.fhir.r4.international401;
 configurable BulkExportServerConfig sourceServerConfig = ?;
 configurable BulkExportClientConfig clientServiceConfig = ?;
 configurable TargetServerConfig targetServerConfig = ?;
-configurable int file_service_port = 8099;
 
 http:OAuth2ClientCredentialsGrantConfig config = {
     tokenUrl: sourceServerConfig.tokenUrl,
@@ -32,7 +31,7 @@ http:OAuth2ClientCredentialsGrantConfig config = {
 
 isolated http:Client statusClient = check new (sourceServerConfig.baseUrl);
 
-isolated service /bulk on new http:Listener(file_service_port) {
+isolated service /bulk on new http:Listener(9099) {
 
     function init() returns error? {
 
@@ -240,34 +239,34 @@ isolated service /bulk on new http:Listener(file_service_port) {
     }
 }
 
-// isolated service /file on new http:Listener(file_service_port) {
+isolated service /file on new http:Listener(8099) {
 
-//     // Resource function to fetch the exported files.
-//     //
-//     // @param req - The HTTP request.
-//     // @param exportId - The ID of the export task.
-//     // @param resourceType - The type of the resource to be exported.
-//     //
-//     // @return The response containing the downloaded file.
-//     isolated resource function get fetch(http:Request req, string exportId, string resourceType) returns @http:Payload {mediaType: "gzip"} http:Response|error? {
+    // Resource function to fetch the exported files.
+    //
+    // @param req - The HTTP request.
+    // @param exportId - The ID of the export task.
+    // @param resourceType - The type of the resource to be exported.
+    //
+    // @return The response containing the downloaded file.
+    isolated resource function get fetch(http:Request req, string exportId, string resourceType) returns @http:Payload {mediaType: "gzip"} http:Response|error? {
 
-//         log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
-//         string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
+        log:printInfo("Downloading file for member: " + exportId + " and resource type: " + resourceType);
+        string filePath = clientServiceConfig.targetDirectory + file:pathSeparator + exportId + file:pathSeparator + resourceType + "-exported.ndjson";
 
-//         mime:Entity entity = new;
-//         entity.setFileAsEntityBody(filePath);
+        mime:Entity entity = new;
+        entity.setFileAsEntityBody(filePath);
 
-//         http:Response response = new;
-//         response.setEntity(entity);
-//         error? contentType = response.setContentType("gzip");
-//         if contentType is error {
-//             log:printError("Error occurred while setting the content type: ");
-//         }
-//         return response;
+        http:Response response = new;
+        response.setEntity(entity);
+        error? contentType = response.setContentType("gzip");
+        if contentType is error {
+            log:printError("Error occurred while setting the content type: ");
+        }
+        return response;
 
-//     }
+    }
 
-// }
+}
 
 isolated function submitBackgroundJob(string taskId, http:Response|http:ClientError status) {
     if status is http:Response {
