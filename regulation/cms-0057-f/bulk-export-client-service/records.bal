@@ -43,7 +43,7 @@ public type BulkExportServerConfig record {|
 public type TargetServerConfig record {|
     string 'type;
     string host;
-    int port;
+    int port = 9099;
     string username;
     string password;
     string directory;
