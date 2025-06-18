@@ -1,8 +1,9 @@
 # Bulk Export Client Pre-built Service
 
-This Ballerina pre-built service is designed to interact with a FHIR server to consume the /Patient/$export operation. It provides endpoints to kick off the export process, check the status of the export, download the exported files, and optionally send the downloaded files to an FTP server.
+This Ballerina pre-built service is designed to interact with a FHIR server to consume the `/Patient/$export` operation. It provides endpoints to kick off the export process, check the status of the export, download the exported files, and optionally send the downloaded files to an FTP server.
 
 ## Features
+
 - Initiates `/Patient/$export` operation on a FHIR server.
 - Retrieves the status of the export process.
 - Downloads exported NDJSON files from the FHIR server.
@@ -11,54 +12,70 @@ This Ballerina pre-built service is designed to interact with a FHIR server to c
 ## Endpoints
 
 ### 1. Kick-off Export
+
 Initiates the `/Patient/$export` operation on the FHIR server.
 
-**Endpoint**:  
-`POST /bulk/export` for single Patient exports
-`GET /bulk/export` for all Patient exports
+**Endpoint:**
 
-**Request Body**:
+- `POST /bulk/export` for single Patient exports
+- `GET /bulk/export` for all Patient exports
+
+**Request Body:**
+
 ```json
 [
-    {"id":"member-id1"},
-    {"id":"member-id2"}
+    {"id": "member-id1"},
+    {"id": "member-id2"}
 ]
+```
 
-**Response**:  
-- Returns an OperationOutcome resource with the exportId.
+**Response:**
+
+Returns an OperationOutcome resource with the `exportId`.
 
 ### 2. Get Export Status
+
 Checks the status of the ongoing export operation.
 
-**Endpoint**:  
+**Endpoint:**
+
 `GET /bulk/status`
 
-***Params:*** <br>- exportId - exportId returned in kick-off response
+**Params:**
 
+- `exportId` - The exportId returned in the kick-off response
 
-**Response**:  
-- Provides the status instnaces of the export process (status of all polling events happened in the background).
+**Response:**
+
+Provides the status instances of the export process (status of all polling events that happened in the background).
 
 ### 3. Download Exported Files
+
 Downloads the exported NDJSON files once the export process is complete.
 
-**Endpoint**:  
+**Endpoint:**
+
 `GET /file/fetch`
 
-***Params:*** <br> 
-- exportId - exportId returned in kick-off response
-- resourceType - FHIR resource type
+**Params:**
 
-**Response**:  
-- Downloads the NDJSON files containing the exported FHIR resources for given exportId and resourceType.
+- `exportId` - The exportId returned in the kick-off response
+- `resourceType` - FHIR resource type
+
+**Response:**
+
+Downloads the NDJSON files containing the exported FHIR resources for the given exportId and resourceType.
 
 ## How to Run
- - Clone the repository
- - Add configurations.
-    - If you're trying this on Choreo, you can configure values upon in the deploy step.
-    - For other deployments, add a file named, `Config.toml` with following configs to the Ballerina project root.
 
-    ``` toml
+1. Clone the repository.
+
+2. Add configurations:
+
+    - If you're trying this on Choreo, you can configure values during the deploy step.
+    - For other deployments, add a file named `Config.toml` with the following configs to the Ballerina project root:
+
+    ```toml
     [clientServiceConfig]
     port = 9099
     authEnabled = false
@@ -75,17 +92,20 @@ Downloads the exported NDJSON files once the export process is complete.
     defaultIntervalInSec = 2.0
 
     [targetServerConfig]
-    type = "fhir" #or fhir
+    type = "fhir" # or ftp
     host = "host"
     port = <port>
     username = "username"
     password = "password"
-    directory = "<target_dir>>"
+    directory = "<target_dir>"
     ```
 
- - Run the project
- ` bal run` 
+3. Run the project:
 
+    ```sh
+    bal run
+    ```
 
- ### Note:
- For configure Choreo component's in-memory storage as file storage, add a volume mount to `/workspace/${target_dir}`
+### Note
+
+To configure Choreo component's in-memory storage as file storage, add a volume mount to `/workspace/${target_dir}`.
