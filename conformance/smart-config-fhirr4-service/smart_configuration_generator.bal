@@ -36,7 +36,7 @@ public isolated function generateSmartConfiguration() returns SmartConfiguration
         return error(string `${VALUE_NOT_FOUND}: Authorization endpoint`);
     }
 
-    string? token_endpoint = openIdConfigurations.token_endpoint ?: configs.smartConfiguration?.tokenEndpoint ?: ();
+    string? token_endpoint = configs.smartConfiguration?.tokenEndpoint;
     if token_endpoint is () || token_endpoint == "" {
         return error(string `${VALUE_NOT_FOUND}: Token endpoint`);
     }
