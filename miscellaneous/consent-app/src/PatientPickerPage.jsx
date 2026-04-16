@@ -14,57 +14,6 @@ import Select from "@oxygen-ui/react/Select";
 import Toolbar from "@oxygen-ui/react/Toolbar";
 import Typography from "@oxygen-ui/react/Typography";
 
-// ─── Development dummy data ───────────────────────────────────────────────────
-const DUMMY_USER = {
-  username: "jane.smith",
-  displayName: "Jane Smith",
-  email: "jane.smith@clinic.example.com",
-  roles: ["practitioner"],
-};
-
-const DUMMY_PATIENTS = [
-  {
-    id: "patient-001",
-    name: "Alice Johnson",
-    dob: "1985-03-15",
-    gender: "Female",
-    mrn: "MRN-10012",
-    phone: "+1 (555) 012-3456",
-    address: "123 Maple Street, Springfield, IL 62701",
-    bloodType: "O+",
-  },
-  {
-    id: "patient-002",
-    name: "Bob Martinez",
-    dob: "1972-07-22",
-    gender: "Male",
-    mrn: "MRN-10047",
-    phone: "+1 (555) 987-6543",
-    address: "456 Oak Avenue, Shelbyville, IL 62565",
-    bloodType: "A-",
-  },
-  {
-    id: "patient-003",
-    name: "Carol White",
-    dob: "1990-11-08",
-    gender: "Female",
-    mrn: "MRN-10093",
-    phone: "+1 (555) 246-8013",
-    address: "789 Pine Road, Capital City, IL 62703",
-    bloodType: "B+",
-  },
-  {
-    id: "patient-004",
-    name: "David Chen",
-    dob: "1968-01-30",
-    gender: "Male",
-    mrn: "MRN-10128",
-    phone: "+1 (555) 135-7924",
-    address: "321 Elm Boulevard, Ogdenville, IL 62571",
-    bloodType: "AB+",
-  },
-];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatDob(dob) {
   if (!dob) return "—";
@@ -103,6 +52,27 @@ function Wso2Logo() {
   );
 }
 
+function ErrorBanner({ message }) {
+  return (
+    <Box
+      sx={{
+        p: 2,
+        mb: 3,
+        bgcolor: "#fff5f5",
+        border: "1px solid #ffcdd2",
+        borderRadius: 2,
+      }}
+    >
+      <Typography variant="body2" sx={{ color: "#d32f2f", fontWeight: 600, mb: 0.5 }}>
+        Something went wrong
+      </Typography>
+      <Typography variant="body2" sx={{ color: "#d32f2f" }}>
+        {message}
+      </Typography>
+    </Box>
+  );
+}
+
 function DetailRow({ label, value }) {
   return (
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", mb: 1 }}>
@@ -127,37 +97,71 @@ function DetailRow({ label, value }) {
 }
 
 // ─── PatientPickerPage ────────────────────────────────────────────────────────
-export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyConsent, spId }) {
+function mapScimPatient(resource) {
+  const givenName = resource.name?.givenName ?? "";
+  const familyName = resource.name?.familyName ?? "";
+  const name = [givenName, familyName].filter(Boolean).join(" ") || resource.userName || resource.id;
+  const fhirUser = resource["urn:scim:schemas:extension:custom:User"]?.fhirUser ?? null;
+  return {
+    id: resource.id,
+    name,
+    mrn: resource.userName ?? null,
+    fhirUser,
+    dob: null,
+    gender: null,
+    phone: null,
+    address: null,
+    bloodType: null,
+  };
+}
+
+function mapScimUser(scim) {
+  const givenName = scim.name?.givenName ?? "";
+  const familyName = scim.name?.familyName ?? "";
+  const displayName = [givenName, familyName].filter(Boolean).join(" ") || scim.userName;
+  const workEmail = scim.emails?.find((e) => e.type === "work")?.value;
+  const email = workEmail ?? scim.emails?.[0]?.value ?? "";
+  const roles = (scim.roles ?? []).map((r) => r.value);
+  return { username: scim.userName, displayName, email, roles };
+}
+
+export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyConsent, spId, user: userId }) {
   const [user, setUser] = useState(null);
   const [patients, setPatients] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [userError, setUserError] = useState(null);
+  const [patientsError, setPatientsError] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/me")
-        .then((r) => {
-          if (!r.ok) throw new Error("user fetch failed");
-          return r.json();
-        })
-        .catch(() => DUMMY_USER),
-      fetch("/api/patients")
-        .then((r) => {
-          if (!r.ok) throw new Error("patients fetch failed");
-          return r.json();
-        })
-        .catch(() => DUMMY_PATIENTS),
-    ])
-      .then(([userData, patientsData]) => {
-        setUser(userData);
-        setPatients(Array.isArray(patientsData) ? patientsData : []);
-        setLoading(false);
+    const userPromise = fetch(`/api/me?userId=${encodeURIComponent(userId ?? "")}`)
+      .then((r) => {
+        if (r.status === 400) throw new Error("User ID is missing or invalid.");
+        if (r.status === 502) throw new Error("Could not reach the identity server to load user details.");
+        if (!r.ok) throw new Error(`Failed to load user details (HTTP ${r.status}).`);
+        return r.json();
       })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+      .then(mapScimUser)
+      .catch((err) => { setUserError(err.message); return null; });
+
+    const patientsPromise = fetch("/api/patients")
+      .then((r) => {
+        if (r.status === 502) throw new Error("Could not reach the identity server to load patient list.");
+        if (!r.ok) throw new Error(`Failed to load patient list (HTTP ${r.status}).`);
+        return r.json();
+      })
+      .then((data) => {
+        const resources = Array.isArray(data.Resources) ? data.Resources : [];
+        if (resources.length === 0) throw new Error("No patients found matching the required criteria.");
+        return resources.map(mapScimPatient);
+      })
+      .catch((err) => { setPatientsError(err.message); return []; });
+
+    Promise.all([userPromise, patientsPromise]).then(([userData, patientsData]) => {
+      if (userData) setUser(userData);
+      setPatients(patientsData);
+      setLoading(false);
+    });
   }, []);
 
   const selectedPatient = patients.find((p) => p.id === selectedId) ?? null;
@@ -284,58 +288,50 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
               Choose the patient record you want to associate with this session.
             </Typography>
 
-            {/* Meta badges */}
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-              {user && (
-                <Chip
-                  label={`Practitioner: ${user.displayName || user.username}`}
-                  size="small"
-                  sx={{
-                    bgcolor: "#eeeeff",
-                    color: "#3B3B8F",
-                    fontWeight: 600,
-                    fontSize: "11px",
-                    letterSpacing: "0.03em",
-                  }}
-                />
-              )}
-              <Chip
-                label={`${patients.length} patient${patients.length !== 1 ? "s" : ""} available`}
-                size="small"
-                sx={{
-                  bgcolor: "#f0faf0",
-                  color: "#2e7d32",
-                  fontWeight: 600,
-                  fontSize: "11px",
-                }}
-              />
-            </Box>
-
-            {/* Loading / error states */}
+            {/* Loading state */}
             {loading && (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                 <CircularProgress size={36} sx={{ color: "#3B3B8F" }} />
               </Box>
             )}
 
-            {!loading && error && (
-              <Box
-                sx={{
-                  p: 2,
-                  mb: 3,
-                  bgcolor: "#fff5f5",
-                  border: "1px solid #ffcdd2",
-                  borderRadius: 2,
-                }}
-              >
-                <Typography variant="body2" sx={{ color: "#d32f2f" }}>
-                  Could not load data — showing sample records. ({error})
-                </Typography>
+            {/* Error banners */}
+            {!loading && userError && <ErrorBanner message={userError} />}
+            {!loading && patientsError && <ErrorBanner message={patientsError} />}
+
+            {/* Meta badges */}
+            {!loading && (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
+                {user && (
+                  <Chip
+                    label={`Practitioner: ${user.displayName || user.username}`}
+                    size="small"
+                    sx={{
+                      bgcolor: "#eeeeff",
+                      color: "#3B3B8F",
+                      fontWeight: 600,
+                      fontSize: "11px",
+                      letterSpacing: "0.03em",
+                    }}
+                  />
+                )}
+                {!patientsError && (
+                  <Chip
+                    label={`${patients.length} patient${patients.length !== 1 ? "s" : ""} available`}
+                    size="small"
+                    sx={{
+                      bgcolor: "#f0faf0",
+                      color: "#2e7d32",
+                      fontWeight: 600,
+                      fontSize: "11px",
+                    }}
+                  />
+                )}
               </Box>
             )}
 
-            {/* Patient dropdown */}
-            {!loading && (
+            {/* Patient dropdown — only when patients loaded successfully */}
+            {!loading && !patientsError && (
               <>
                 <Typography
                   variant="caption"
@@ -352,7 +348,6 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
                 </Typography>
                 <FormControl fullWidth size="small" sx={{ mb: 3 }}>
                   <Select
-                    labelId="patient-select-label"
                     value={selectedId}
                     displayEmpty
                     renderValue={(value) =>
@@ -382,7 +377,7 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
                               {p.name}
                             </Typography>
                             <Typography variant="caption" sx={{ color: "#5a5a72" }}>
-                              {p.mrn} · {p.gender} · Age {calcAge(p.dob)}
+                              {p.mrn}
                             </Typography>
                           </Box>
                         </Box>
@@ -426,11 +421,15 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
 
                     <Divider sx={{ mb: 1.5 }} />
 
-                    <DetailRow
-                      label="Date of Birth"
-                      value={`${formatDob(selectedPatient.dob)} (Age ${calcAge(selectedPatient.dob)})`}
-                    />
-                    <DetailRow label="Gender" value={selectedPatient.gender} />
+                    {selectedPatient.dob && (
+                      <DetailRow
+                        label="Date of Birth"
+                        value={`${formatDob(selectedPatient.dob)} (Age ${calcAge(selectedPatient.dob)})`}
+                      />
+                    )}
+                    {selectedPatient.gender && (
+                      <DetailRow label="Gender" value={selectedPatient.gender} />
+                    )}
                     {selectedPatient.bloodType && (
                       <DetailRow label="Blood Type" value={selectedPatient.bloodType} />
                     )}
@@ -439,6 +438,9 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
                     )}
                     {selectedPatient.address && (
                       <DetailRow label="Address" value={selectedPatient.address} />
+                    )}
+                    {selectedPatient.fhirUser && (
+                      <DetailRow label="FHIR User" value={selectedPatient.fhirUser} />
                     )}
                   </Box>
                 )}
@@ -492,6 +494,29 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
                 </Box>
               </>
             )}
+
+            {/* Cancel-only fallback when patients failed to load */}
+            {!loading && patientsError && (
+              <Box sx={{ display: "flex", gap: 1.5, mt: 1 }}>
+                <Button
+                  variant="outlined"
+                  onClick={handleCancel}
+                  sx={{
+                    color: "#d32f2f",
+                    borderColor: "#d32f2f",
+                    fontWeight: 600,
+                    fontSize: "15px",
+                    py: 1.5,
+                    px: 3,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    "&:hover": { bgcolor: "#fff5f5", borderColor: "#d32f2f" },
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            )}
           </CardContent>
         </Card>
       </Box>
@@ -509,8 +534,7 @@ export default function PatientPickerPage({ onProceed, onCancel, sessionDataKeyC
           bgcolor: "#ffffff",
         }}
       >
-        <Typography variant="captio
-        n" sx={{ color: "#9090a8" }}>
+        <Typography variant="caption" sx={{ color: "#9090a8" }}>
           WSO2 Healthcare | © {new Date().getFullYear()}
         </Typography>
       </Box>

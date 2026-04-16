@@ -1,10 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ConsentPage from './ConsentPage';
 import PatientPickerPage from './PatientPickerPage';
 
 const consentProps = window.__CONSENT_PROPS__;
-const urlParams = new URLSearchParams(window.location.search);
-// const isPatientPickerRoute = urlParams.get('page') === 'patient-picker';
 
 function readStoredPatient() {
   const stored = sessionStorage.getItem("selectedPatient");
@@ -13,10 +11,34 @@ function readStoredPatient() {
   try { return JSON.parse(stored); } catch { return null; }
 }
 
+function isPractitioner(scimUser) {
+  console.log("SCIM user data:", scimUser);
+  const fhirUser = scimUser?.["urn:scim:schemas:extension:custom:User"]?.fhirUser ?? "";
+  return typeof fhirUser === "string" && fhirUser.includes("Practitioner");
+}
+
 export default function App() {
   const [selectedPatient, setSelectedPatient] = useState(readStoredPatient);
+  const [practitioner, setPractitioner] = useState(null); // null = loading, true/false = resolved
 
-  if (!selectedPatient) {
+  const userId = consentProps?.user ?? "";
+
+  useEffect(() => {
+    if (!userId) {
+      setPractitioner(false);
+      return;
+    }
+    fetch(`/api/me?userId=${encodeURIComponent(userId)}`)
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => setPractitioner(isPractitioner(data)))
+      .catch(() => setPractitioner(false));
+  }, [userId]);
+
+  if (practitioner === null) {
+    return null; // loading — render nothing until role is resolved
+  }
+
+  if (practitioner && !selectedPatient) {
     return (
       <PatientPickerPage
         {...(consentProps ?? {})}
