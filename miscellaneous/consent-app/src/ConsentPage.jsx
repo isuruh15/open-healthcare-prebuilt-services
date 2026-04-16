@@ -238,6 +238,7 @@ export default function ConsentPage({
   scopes = [],
   onApprove,
   onDeny,
+  additionalContext = [],
 }) {
   // Validate SMART scopes: if it starts with patient/user/system/ it must match the full regex
   const scopeRegex = /^(patient|user|system)\/(\*|[A-Za-z]*)\.(cruds|c?r?u?d?s?)$/;
@@ -270,7 +271,7 @@ export default function ConsentPage({
 
   const handleApprove = () => {
     if (onApprove) {
-      onApprove({ sessionDataKeyConsent, spId, user, scopes: [...selectedScopes, ...hiddenScopes] });
+      onApprove({ sessionDataKeyConsent, spId, user, scopes: [...selectedScopes, ...hiddenScopes], additionalContext });
       return;
     }
     // Real form submission
@@ -295,6 +296,13 @@ export default function ConsentPage({
       el.type = "hidden"; el.name = "scope"; el.value = s;
       form.appendChild(el);
     });
+    if (additionalContext.length > 0) {
+      const el = document.createElement("input");
+      el.type = "hidden";
+      el.name = "additionalContext";
+      el.value = JSON.stringify(additionalContext);
+      form.appendChild(el);
+    }
     document.body.appendChild(form);
     form.submit();
   };

@@ -125,6 +125,7 @@ service / on consentListener {
         string user = getFirstValue(form, "user") ?: "";
         string spId = getFirstValue(form, "spId") ?: "";
         string[] selectedScopes = form["scope"] ?: [];
+        string[] additionalContext = form["additionalContext"] ?: [];
 
         if consentAuthorizeRedirectUrl == "" {
             json result = {
@@ -134,7 +135,8 @@ service / on consentListener {
                 User_claims_consent: userClaimsConsent,
                 user: user,
                 spId: spId,
-                scopes: selectedScopes
+                scopes: selectedScopes,
+                additionalContext: additionalContext
             };
             http:Response response = new;
             response.setHeader("Content-Type", "application/json");
@@ -159,8 +161,17 @@ service / on consentListener {
         if cookieHeader == "" {
             return buildTextResponse(400, "Missing session cookies. Ensure consent page is loaded over HTTPS.");
         }
-        if cookieHeader.indexOf("JSESSIONID=") is () || cookieHeader.indexOf("opbs=") is () {
-            return buildTextResponse(400, "Required IS session cookies are missing (JSESSIONID/opbs).");
+
+        boolean hasJSessionId = cookieHeader.indexOf("JSESSIONID=") is int;
+        boolean hasOpbs = cookieHeader.indexOf("opbs=") is int;
+        boolean hasCommonAuthId = cookieHeader.indexOf("commonAuthId=") is int;
+        if !hasJSessionId && !hasOpbs && !hasCommonAuthId {
+            return buildTextResponse(400,
+                "No recognizable IS session cookie found (expected one of JSESSIONID/opbs/commonAuthId).");
+        }
+        if !hasJSessionId || !hasOpbs {
+            log:printWarn("Some IS session cookies are missing in browser request; continuing with available cookies",
+                hasJSessionId = hasJSessionId, hasOpbs = hasOpbs, hasCommonAuthId = hasCommonAuthId);
         }
         if consent != "deny" && user == "" {
             return buildTextResponse(400, "Missing authenticated user in consent context.");
